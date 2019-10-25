@@ -1,0 +1,102 @@
+//
+//  CheckInVC.swift
+//  MoTiv
+//
+//  Created by ios2 on 04/12/18.
+//  Copyright © 2018 MoTiv. All rights reserved.
+//
+
+import UIKit
+
+class CheckInVC: BaseVC {
+
+    //MARK: IBOutlets
+    @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var searchTextField: TextField!
+    @IBOutlet weak var scanButtonView: UIView!
+    @IBOutlet weak var userButton: UIButton!
+    @IBOutlet weak var guestButton: UIButton!
+    
+    //MARK: Variables
+    var userType = 1 //1: User, 2: Guest
+    
+    //MARLK: - Life cycle
+    override func viewDidLoad() {
+        super.viewDidLoad()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        self.showPopover(title: kScanPop, sender: scanButtonView)
+    }
+
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        customiseUI()
+    }
+    
+    //MARK: Private Methods
+    private func customiseUI(){
+        setTitle(title: kCheckIn)
+        setRightButton(image: #imageLiteral(resourceName: "print"))
+        self.scanButtonView.layer.cornerRadius = scanButtonView.half
+        self.searchTextField.set(radius: 14.0)
+        searchTextField.text!.count > 0 ? searchTextField.setShadow(): searchTextField.removeShadow()
+        searchTextField.rightImage = searchTextField.text!.count > 0 ? #imageLiteral(resourceName: "searchSelected"): #imageLiteral(resourceName: "searchUnSelected")
+
+    }
+    
+    @IBAction func changeTypeButtonAction(_ sender: UIButton) {
+        if sender.tag == 1 {
+            userButton.backgroundColor = UIColor.motivColor.darkBaseColor.color()
+            guestButton.backgroundColor = UIColor.motivColor.baseColor.color()
+        }
+        else {
+            userButton.backgroundColor = UIColor.motivColor.baseColor.color()
+            guestButton.backgroundColor = UIColor.motivColor.darkBaseColor.color()
+        }
+        userType = sender.tag
+        tableView.reloadData()
+    }
+    
+    
+    @IBAction func scanTicketAction(_ sender: UIButton) {
+        let storyboard = UIStoryboard(storyboard: .Home)
+        let scanvc = storyboard.instantiateViewController(withIdentifier: kScanTicketVC) as! ScanTicketVC
+        self.navigationController?.show(scanvc, sender: true)
+    }
+    
+    @IBAction func textDidChange(_ sender: TextField) {
+        sender.text!.count > 0 ? sender.setShadow(): sender.removeShadow()
+        sender.rightImage = sender.text!.count > 0 ? #imageLiteral(resourceName: "searchSelected"): #imageLiteral(resourceName: "searchUnSelected")
+    }
+    
+}
+
+
+//MARK: UITableview Datasource
+extension CheckInVC: UITableViewDataSource {
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return 6
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        if  userType == 1 {
+            let cell = tableView.dequeueReusableCell(withIdentifier: kCheckInCell) as! CheckInCell
+            return cell
+        }
+        else {
+            let cell = tableView.dequeueReusableCell(withIdentifier: kGuestListcell) as! GuestListcell
+            return cell
+        }
+    }
+}
+
+//MARK: UItableview Delegates
+extension CheckInVC: UITableViewDelegate {
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+    }
+}

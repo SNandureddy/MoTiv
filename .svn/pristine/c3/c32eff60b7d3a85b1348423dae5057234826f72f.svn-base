@@ -1,0 +1,37 @@
+//
+//  U_TabbarVC.swift
+//  MoTiv
+//
+//  Created by IOS on 08/12/18.
+//  Copyright © 2018 MoTiv. All rights reserved.
+//
+
+import UIKit
+
+class U_TabbarVC: UITabBarController {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        self.tabBar.backgroundImage = UIImage()
+        self.selectedIndex = 0
+        tabBar.layer.borderWidth = 0.5
+        tabBar.layer.borderColor = UIColor.motivColor.darkBaseColor.color().cgColor
+        tabBar.clipsToBounds = true
+        
+        let attribute = [NSAttributedString.Key.foregroundColor : UIColor.white] as! [NSAttributedString.Key: Any]
+        UITabBarItem.appearance().setTitleTextAttributes(attribute, for: .normal)
+        UITabBarItem.appearance().setTitleTextAttributes(attribute, for: .selected)
+    }
+    
+    override func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
+        let attribute = [NSAttributedString.Key.foregroundColor : UIColor.white] as! [NSAttributedString.Key: Any]
+        UITabBarItem.appearance().setTitleTextAttributes(attribute, for: .normal)
+        UITabBarItem.appearance().setTitleTextAttributes(attribute, for: .selected)
+    }
+    
+    
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        return .lightContent
+    }
+}

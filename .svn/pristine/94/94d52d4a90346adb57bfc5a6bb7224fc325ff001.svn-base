@@ -1,0 +1,52 @@
+
+//
+//  ProfilePictureVC.swift
+//  MoTiv
+//
+//  Created by ios2 on 03/12/18.
+//  Copyright © 2018 MoTiv. All rights reserved.
+//
+
+import UIKit
+import SDWebImage
+
+class ProfilePictureVC: BaseVC {
+
+    //MARK: IBOutlets
+    @IBOutlet weak var userImageView: UIImageView!
+    
+    //MARK: Class Life Cycle
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupData()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        customiseUI()
+    }
+    
+    //MARK: Private Methods
+    private func customiseUI() {
+        userImageView.set(radius: 60)
+    }
+    
+    private func setupData() {
+        userImageView.sd_setImage(with: SignupContainerVC.userDict[APIKeys.kImage] as? URL, placeholderImage: #imageLiteral(resourceName: "userImagePlaceholder"), options: .refreshCached, completed: nil)
+    }
+    
+    //MARK: IBActions
+    @IBAction func addProfilePictureButtonAction(_ sender: Any) {
+        CustomImagePickerView.sharedInstace.delegate = self
+        showImagePicker()
+    }
+}
+
+//MARK: Image Picker Delegate
+extension ProfilePictureVC: CustomImagePickerDelegate {
+    
+    func didImagePickerFinishPicking(_ image: UIImage) {
+        userImageView.image = image
+        SignupContainerVC.imageDict[APIKeys.kImage] = image.imageData
+    }
+}

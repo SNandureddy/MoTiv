@@ -1,0 +1,94 @@
+//
+//  O_HomeVC.swift
+//  MoTiv
+//
+//  Created by IOS on 27/11/18.
+//  Copyright © 2018 MoTiv. All rights reserved.
+//
+
+import UIKit
+
+class O_HomeVC: BaseVC {
+    
+    //MARK: IBOutlets
+    @IBOutlet weak var nowButton: UIButton!
+    @IBOutlet weak var futureButton: UIButton!
+    @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var stackView: UIView!
+    @IBOutlet weak var addButton: UIButton!
+    
+    
+    //MARK: Class Life Cycle
+    override func viewDidLoad() {
+        super.viewDidLoad()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        self.customiseUI()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        self.showPopover(title: kCreateMotivPop, sender: addButton)
+    }
+
+    //MARK: Private Methods
+    private func customiseUI() {
+        setTitle(title: kMyEvents)
+        setLeftButton(image: #imageLiteral(resourceName: "search"))
+        setRightButton(image: #imageLiteral(resourceName: "faq"))
+        stackView.set(radius: 0.0, borderColor: UIColor.white, borderWidth: 1.0)
+    }
+    
+    override func rightButtonAction(sender: UIButton) {
+        let storybaord = UIStoryboard(storyboard: .Profile)
+        let faqvc = storybaord.instantiateViewController(withIdentifier: kHelpVC) as! HelpVC
+        let nav = UINavigationController(rootViewController: faqvc)
+        self.navigationController?.present(nav, animated: true, completion: nil)
+    }
+    
+    //MARK: IBActions
+    @IBAction func eventTypeButtonAction(_ sender: UIButton) {
+        sender.backgroundColor = UIColor.motivColor.darkBaseColor.color()
+        if sender.tag == 1 { //NOW
+            futureButton.backgroundColor = UIColor.motivColor.baseColor.color()
+        }
+        else { //FUTURE
+            nowButton.backgroundColor = UIColor.motivColor.baseColor.color()
+        }
+    }
+    
+    @IBAction func createMoTivAction(_ sender: UIButton) {
+        if !DataManager.isLoggedIn {
+            self.showAlert(title: kLoginNow, message: kLoginAlert, okayTitle: kOkay) {
+                self.logout()
+            }
+            return
+        }
+        let createvc = self.storyboard?.instantiateViewController(withIdentifier: kOCreateMainVC) as! O_CreateMainVC
+        self.navigationController?.show(createvc, sender: self)
+    }
+}
+
+//MARK: UITableview Datasource
+extension O_HomeVC: UITableViewDataSource {
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return 6
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: kEventCell) as! EventCell
+        return cell
+    }
+}
+
+//MARK: UItableview Delegates
+extension O_HomeVC: UITableViewDelegate {
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let detailvc = self.storyboard?.instantiateViewController(withIdentifier: kEventDetails) as! EventDetailVC
+        self.navigationController?.show(detailvc, sender: self)
+    }
+}

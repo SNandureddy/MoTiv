@@ -1,0 +1,90 @@
+//
+//  EventMenuVC.swift
+//  MoTiv
+//
+//  Created by ios2 on 04/12/18.
+//  Copyright © 2018 MoTiv. All rights reserved.
+//
+
+import UIKit
+
+class EventMenuVC: BaseVC {
+    
+    //MARK: Private Methods
+    @IBOutlet weak var CheckInButton: UIButton!
+    @IBOutlet weak var dashboardButton: UIButton!
+    @IBOutlet weak var GuestListButton: UIButton!
+    @IBOutlet weak var closeSalesButton: UIButton!
+    
+    //MARK: Variables
+    var selectedIndex = Int()
+    
+    //MARK: Class Life Cycle
+    override func viewDidLoad() {
+        super.viewDidLoad()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        customiseUI()
+    }
+    
+    //MARK: Private Methods
+    func customiseUI(){
+        setTitle(title: EventVM.shared.checkInEventDetailArray?[selectedIndex].eventName ?? "")
+        dashboardButton.set(radius: 14.0)
+        CheckInButton.set(radius: 14.0)
+        GuestListButton.set(radius: 14.0)
+        dashboardButton.setBackgroundImage(dashboardButton.graidentImage, for: .normal)
+        closeSalesButton.setBackgroundImage(closeSalesButton.graidentImage, for: .normal)
+        closeSalesButton.set(radius: 14.0)
+    }
+    
+    func setData() -> JSONDictionary {
+        var dict = JSONDictionary()
+        dict[APIKeys.kEventID] = EventVM.shared.checkInEventDetailArray?[selectedIndex].eventID
+        return dict
+    }
+
+    
+    //MARK:- IBAction
+    @IBAction func dashboardButtonAction(_ sender: Any) {
+        let dashboardVC = self.storyboard?.instantiateViewController(withIdentifier: kDashBoardVC) as! DashBoardVC
+        dashboardVC.selectedIndex = self.selectedIndex
+        self.navigationController?.pushViewController(dashboardVC, animated: true)
+    }
+    
+    @IBAction func CheckInButtonAction(_ sender: Any) {
+        let checkInVC = self.storyboard?.instantiateViewController(withIdentifier: kCheckInVC) as! CheckInVC
+        checkInVC.selectedIndex = self.selectedIndex
+        self.navigationController?.pushViewController(checkInVC, animated: true)
+    }
+    
+    @IBAction func guestListButtonAction(_ sender: Any) {
+        let guestListVC = self.storyboard?.instantiateViewController(withIdentifier: kMainGuestListVC) as! MainGuestListVC
+        guestListVC.selectedIndex = self.selectedIndex
+        self.navigationController?.pushViewController(guestListVC, animated: true)
+    }
+    
+    @IBAction func closeSalesButtonAction(_ sender: Any) {
+        self.showAlert(title: nil, message: kCloseSaleAlert, cancelTitle: kYes, cancelAction: {
+            self.callApiToCloseSale()
+        }, okayTitle: kNo) {
+        }
+    }
+}
+
+//API Methods
+extension EventMenuVC {
+    func callApiToCloseSale(){
+        EventVM.shared.closeSale(dict: setData()){ (message, error) in
+            if error != nil{
+                self.showErrorMessage(error: error)
+            } else{
+                self.showAlert(title: nil, message: kTicketCloseMessage, cancelTitle: nil, cancelAction: nil, okayTitle: kOkay, {
+                    self.navigationController?.popToRootViewController(animated: true)
+                })
+            }
+        }
+    }
+}

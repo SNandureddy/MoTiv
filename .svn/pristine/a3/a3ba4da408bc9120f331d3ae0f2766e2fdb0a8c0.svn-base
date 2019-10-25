@@ -1,0 +1,48 @@
+//
+//  SearchEventCell.swift
+//  MoTiv
+//
+//  Created by Deftsoft on 06/12/18.
+//  Copyright © 2018 MoTiv. All rights reserved.
+//
+
+import UIKit
+
+class SearchEventCell: UITableViewCell,UICollectionViewDelegate, UICollectionViewDataSource,UICollectionViewDelegateFlowLayout {
+    
+    //MARK: IBOutlets
+    @IBOutlet weak var eventCollectionView: UICollectionView!
+    @IBOutlet weak var collectionViewHeightConstraint: NSLayoutConstraint!
+    
+    //MARK: Variables
+    var rows = 0
+    
+    override func awakeFromNib() {
+        super.awakeFromNib()
+        eventCollectionView.dataSource = self
+        eventCollectionView.delegate = self
+    }
+    
+    
+    override func setSelected(_ selected: Bool, animated: Bool) {
+        super.setSelected(selected, animated: animated)
+    }
+    
+    func numberOfSections(in collectionView: UICollectionView) -> Int {
+        return 1
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return self.rows
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: kUserEventCell, for: indexPath)
+        return cell
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        return CGSize(width: (collectionView.frame.width-10)/2, height: 130)
+    }
+}
+

@@ -1,0 +1,107 @@
+//
+//  EventDataModel.swift
+//  MoTiv
+//
+//  Created by Apple on 01/02/19.
+//  Copyright © 2019 MoTiv. All rights reserved.
+//
+
+import Foundation
+import UIKit
+
+struct EventDetail {
+    var eventName : String?
+    var ticketAmount : Int?
+    var eventImageURL : String?
+    var eventVideoURL : String?
+    var eventImage : UIImage?
+    var eventDate : String?
+    var guestCount: Int?
+    var eventLocation: String?
+    var eventDescription: String?
+    var eventLatitude: Double?
+    var eventLongitude: Double?
+    var ticketCount: Int?
+    var eventID: Int?
+    
+    init(details: JSONDictionary) {
+        self.eventName = details[APIKeys.kEventName] as? String
+        self.ticketAmount = details[APIKeys.kTicketAmount] as? Int
+        self.eventVideoURL = details[APIKeys.kEventVideoURL] as? String
+        self.eventImageURL = details[APIKeys.kEventImageURL] as? String
+        self.eventDate = details[APIKeys.kEventStartDate] as? String
+        self.guestCount = details[APIKeys.kGuestCount] as? Int
+        self.eventLocation = details[APIKeys.kEventLocation] as? String
+        self.eventDescription = details[APIKeys.kEventDescription] as? String
+        self.eventLatitude = details[APIKeys.kEventLat] as? Double
+        self.eventLongitude = details[APIKeys.kEventLong] as? Double
+        self.ticketCount = details[APIKeys.kTicketCount] as? Int
+        self.eventID = details[APIKeys.kID] as? Int
+    }
+}
+
+struct GuestList {
+    var guestName : String?
+    var guestImageURL : String?
+    
+    init(details: JSONDictionary) {
+        self.guestName = details[APIKeys.kGuestName] as? String
+        self.guestImageURL = details[APIKeys.kGuestImageURL] as? String
+    }
+}
+
+struct PostList {
+    var guestName : String?
+    var guestImageURL : String?
+    
+    init(details: JSONDictionary) {
+        self.guestName = details[APIKeys.kGuestName] as? String
+        self.guestImageURL = details[APIKeys.kGuestImageURL] as? String
+    }
+}
+
+//MARK: Parsing data
+extension EventVM {
+    func parseEventList(response: JSONDictionary) {
+        if self.eventDetailArray == nil {
+            self.eventDetailArray = [EventDetail]()
+        }
+        if let data = response[APIKeys.kData] as? JSONDictionary{
+            self.eventLastPage = data[APIKeys.kLastPage] as? Int
+            if let eventDataArray = data[APIKeys.kData] as? JSONArray {
+                for event in eventDataArray {
+                    let eventList = EventDetail(details: event)
+                    self.eventDetailArray?.append(eventList)
+                }
+            }
+        }
+    }
+    
+    func parseGuestList(response: JSONDictionary) {
+        self.guestListArray = [GuestList]()
+        if let data = response[APIKeys.kData] as? JSONDictionary{
+            if let eventDataArray = data[APIKeys.kData] as? JSONArray {
+                for event in eventDataArray {
+                    let eventList = EventDetail(details: event)
+                    self.eventDetailArray?.append(eventList)
+                }
+            }
+        }
+    }
+
+    func parsePostList(response: JSONDictionary) {
+        self.postListArray = [PostList]()
+        if let data = response[APIKeys.kData] as? JSONDictionary{
+            self.postLastPage = data[APIKeys.kLastPage] as? Int
+            if let eventDataArray = data[APIKeys.kData] as? JSONArray {
+                for event in eventDataArray {
+                    let eventList = EventDetail(details: event)
+                    self.eventDetailArray?.append(eventList)
+                }
+            }
+        }
+    }
+
+}
+
+

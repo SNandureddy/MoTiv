@@ -1,0 +1,39 @@
+//
+//  DirectionVC.swift
+//  MoTiv
+//
+//  Created by IOS on 30/11/18.
+//  Copyright © 2018 MoTiv. All rights reserved.
+//
+
+import UIKit
+import MapKit
+
+class DirectionVC: BaseVC {
+    
+    //MARK: IBOutlets
+    @IBOutlet weak var mapView: MKMapView!
+    @IBOutlet weak var mapButton: UIButton!
+    
+    //MARK: Class Life Cycle
+    override func viewDidLoad() {
+        super.viewDidLoad()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        customiseUI()
+    }
+    
+    //MARK: Private Methods
+    private func customiseUI() {
+        setTitle(title: kGetDirections)
+        mapButton.setBackgroundImage(mapButton.graidentImage, for: .normal)
+        mapButton.set(radius: 14.0)
+    }
+    
+    @IBAction func mapButtonAction(_ sender: UIButton) {
+        self.openMapForPlace()
+    }
+    
+}

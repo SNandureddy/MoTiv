@@ -1,0 +1,145 @@
+//
+//  U_HomeVC.swift
+//  MoTiv
+//
+//  Created by Deftsoft on 06/12/18.
+//  Copyright © 2018 MoTiv. All rights reserved.
+//
+
+import UIKit
+
+class U_HomeVC: BaseVC {
+    // MARK: - IBOutlets
+    
+    @IBOutlet weak var eventsTableView: UITableView!
+    @IBOutlet weak var ticketsButton: UIButton!
+    @IBOutlet weak var filterButton: UIButton!
+    @IBOutlet weak var chatButton: UIButton!
+    @IBOutlet weak var questionButton: UIButton!
+    @IBOutlet weak var nowButton: UIButton!
+    @IBOutlet weak var futureButton: UIButton!
+    @IBOutlet weak var favoriteButton: UIButton!
+    
+    // MARK: - Variables
+    var isFirstTime = true
+    var workItem: DispatchWorkItem!
+    var workItem1: DispatchWorkItem!
+    var workItem2: DispatchWorkItem!
+    var workItem3: DispatchWorkItem!
+    var workItem4: DispatchWorkItem!
+
+    // MARK: - Class life cycle
+    override func viewDidLoad() {
+        super.viewDidLoad()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        self.customizeUI()
+    }
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+    }
+    
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+//        workItem = DispatchWorkItem {
+//            self.showPopover(type: .down, title: kSupportPop, sender: self.questionButton)
+//        }
+        workItem1 = DispatchWorkItem {
+            self.showPopover(type: .down, title: kFilterPop, sender: self.filterButton)
+        }
+        workItem2 = DispatchWorkItem {
+            self.showPopover(type: .down, title: kChatPop, sender: self.chatButton)
+        }
+        self.showPopover(type: .down, title: kFilterPop, sender: ticketsButton)
+        //DispatchQueue.main.asyncAfter(deadline: .now()+2, execute: workItem)
+        DispatchQueue.main.asyncAfter(deadline: .now()+4, execute: workItem1)
+        DispatchQueue.main.asyncAfter(deadline: .now()+6, execute: workItem2)
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        //workItem.cancel()
+        workItem1.cancel()
+        workItem2.cancel()
+        workItem3.cancel()
+        workItem4.cancel()
+    }
+
+    
+    // MARK: - Private functions
+    private func customizeUI() {
+        self.hideNavigationBar()
+    }
+    // MARK: - IBActions
+    
+    @IBAction func ticketsButtonAction(_ sender: Any) {
+       
+
+        let ticketvc = self.storyboard?.instantiateViewController(withIdentifier: kMyTicketsVC) as! MyTicketsVC
+        self.show(ticketvc, sender: self)
+    }
+    
+    @IBAction func filterButtonAction(_ sender: Any) {
+        let storyboard = UIStoryboard.init(storyboard: .Home)
+        let nextObj = storyboard.instantiateViewController(withIdentifier: kU_HomeFilterVC)
+        let navController = UINavigationController(rootViewController: nextObj)
+        self.navigationController?.present(navController, animated: true, completion: nil)
+    }
+    @IBAction func chatButtonAction(_ sender: Any) {
+        let storyboard = UIStoryboard.init(storyboard: .Chat)
+        let vc = storyboard.instantiateViewController(withIdentifier: kInboxVC)as! InboxVC
+        self.navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    @IBAction func nowButtonAction(_ sender: Any) {
+        futureButton.backgroundColor = UIColor.clear
+        favoriteButton.backgroundColor = UIColor.clear
+        nowButton.backgroundColor = UIColor.motivColor.darkBaseColor.color()
+    }
+    
+    @IBAction func futureButtonAction(_ sender: Any) {
+        futureButton.backgroundColor = UIColor.motivColor.darkBaseColor.color()
+        favoriteButton.backgroundColor = UIColor.clear
+        nowButton.backgroundColor = UIColor.clear
+
+    }
+    
+    @IBAction func favoriteButtonAction(_ sender: Any) {
+        futureButton.backgroundColor = UIColor.clear
+        favoriteButton.backgroundColor = UIColor.motivColor.darkBaseColor.color()
+        nowButton.backgroundColor = UIColor.clear
+    }
+}
+//MARK: UITableView Delegates & Datasources
+extension U_HomeVC: UITableViewDataSource{
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return 2
+    }
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: kU_HomeCell, for: indexPath)
+        cell.selectionStyle = .none
+        if indexPath.row == 0 && isFirstTime {
+            isFirstTime = false
+            workItem3 = DispatchWorkItem {
+                self.showPopover(type: .down, title: kFavouritePop, sender: (cell.viewWithTag(1) as! UIButton))            }
+            workItem4 = DispatchWorkItem {
+                self.showPopover(type: .down, title: kSharePop, sender: (cell.viewWithTag(2) as! UIButton))            }
+            DispatchQueue.main.asyncAfter(deadline: .now()+1, execute: workItem3)
+            DispatchQueue.main.asyncAfter(deadline: .now()+4, execute: workItem4)
+        }
+        return cell
+    }
+    
+}
+
+extension U_HomeVC: UITableViewDelegate {
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let detailvc = self.storyboard?.instantiateViewController(withIdentifier: kEventDetails) as! EventDetailVC
+        self.navigationController?.show(detailvc, sender: self)
+    }
+}

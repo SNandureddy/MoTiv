@@ -1,0 +1,30 @@
+//
+//  SalesDataTableViewCell.swift
+//  MoTiv
+//
+//  Created by Apple on 25/02/19.
+//  Copyright © 2019 MoTiv. All rights reserved.
+//
+
+import UIKit
+
+class SalesDataTableViewCell: UITableViewCell {
+
+    //MARK: IBOutlets
+    
+    @IBOutlet var recordLabel: UILabel!
+    @IBOutlet var progressImageView: UIImageView!
+    @IBOutlet var progressImageHeightConstraint: NSLayoutConstraint!
+    
+    override func awakeFromNib() {
+        super.awakeFromNib()
+        // Initialization code
+    }
+
+    override func setSelected(_ selected: Bool, animated: Bool) {
+        super.setSelected(selected, animated: animated)
+
+        // Configure the view for the selected state
+    }
+
+}

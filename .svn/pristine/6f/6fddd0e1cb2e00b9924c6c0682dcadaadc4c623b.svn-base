@@ -1,0 +1,552 @@
+//
+//  U_HomeFilterVC.swift
+//  MoTiv
+//
+//  Created by Deftsoft on 06/12/18.
+//  Copyright © 2018 MoTiv. All rights reserved.
+//
+
+import UIKit
+import MapKit
+import SDWebImage
+
+@objc protocol U_HomeFilterDelegate {
+    @objc optional func setFilteredData(object:JSONDictionary)
+}
+class U_HomeFilterVC: BaseVC {
+    // MARK: - IBOutlets
+    
+    @IBOutlet weak var locationLabel: UILabel!
+    @IBOutlet weak var eventSearchLabel: UILabel!
+    @IBOutlet weak var slider: UISlider!
+    @IBOutlet weak var dateTextField: TextField!
+    @IBOutlet weak var mainView: UIView!
+    @IBOutlet weak var moodSongsView: UIView!
+    @IBOutlet weak var moodSongViewHeightConstraint: NSLayoutConstraint!
+    @IBOutlet weak var moodSongCollectionView: UICollectionView!
+    @IBOutlet weak var moodSongSubCollectionView: UICollectionView!
+    @IBOutlet weak var moodSubSongView: UIView!
+    @IBOutlet weak var demandSongsView: UIView!
+    @IBOutlet weak var demandCollectionView: UICollectionView!
+    @IBOutlet weak var demandSongViewHeight: NSLayoutConstraint!
+    @IBOutlet weak var demandSubSongView: UIView!
+    @IBOutlet weak var demandSubCollectionView: UICollectionView!
+    @IBOutlet weak var moodSubSongViewHeight: NSLayoutConstraint!
+    @IBOutlet weak var demandSubSongViewHeight: NSLayoutConstraint!
+    @IBOutlet var moodLabel: UILabel!
+    @IBOutlet var demandLabel: UILabel!
+    
+    // MARK: - Variables
+    static var sliderValue: Int? = 0
+    static var filter : String? = ""
+    static var selectedDate : Date?
+    static var selectedPublicArray = [String]()
+    static var selectedMusicArray = [String]()
+    static var remainingPublicArray = [String]()
+    static var remainingMusicArray = [String]()
+    static var searchSliderValue: Int? = 0
+    static var searchFilter : String? = ""
+    static var searchSelectedDate : Date?
+    static var searchSelectedPublicArray = [String]()
+    static var searchSelectedMusicArray = [String]()
+    static var searchRemainingPublicArray = [String]()
+    static var searchRemainingMusicArray = [String]()
+    static var currentLatitude : Double?
+    static var currentLongitude : Double?
+    var selectedPublicCategoryArray = [Interest]()
+    var selectedMusicCategoryArray = [Interest]()
+    var userPublicCategoryArray = [Interest]()
+    var userMusicCategoryArray = [Interest]()
+    var delegate : U_HomeFilterDelegate?
+    var moodIndex = 0
+    var demandIndex = 0
+    var previousScreen: PreviousScreen = .main
+    
+    // MARK: - Class life cycle
+    override func viewDidLoad() {
+        super.viewDidLoad()
+    }
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(true)
+        pickerDelegate = self
+        self.customizeUI()
+        handleLocation()
+        getPublicInterest()
+    }
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(true)
+        let filteredDate = dateTextField.text != "" ? (dateTextField.text?.dateFromString(format: .longMDYDate, type: .local).stringFromDate(format: .dmyDate, type: .local)) : ""
+        var dict = JSONDictionary()
+        if previousScreen == .main {
+            U_HomeFilterVC.selectedPublicArray = (selectedPublicCategoryArray.compactMap({$0.id})).map{String($0)}
+            U_HomeFilterVC.selectedMusicArray = (selectedMusicCategoryArray.compactMap({$0.id})).map{String($0)}
+            U_HomeFilterVC.remainingPublicArray = (userPublicCategoryArray.compactMap({$0.id})).map{String($0)}
+            U_HomeFilterVC.remainingMusicArray = (userMusicCategoryArray.compactMap({$0.id})).map{String($0)}
+            dict = [APIKeys.kFilter : U_HomeFilterVC.filter ?? "", APIKeys.kLat : U_HomeFilterVC.sliderValue == 0 ? "" : U_HomeFilterVC.currentLatitude ?? 0.0, APIKeys.kLong : U_HomeFilterVC.sliderValue == 0 ? "" : U_HomeFilterVC.currentLongitude ?? 0.0, APIKeys.kMiles : U_HomeFilterVC.sliderValue == 0 ? "" : U_HomeFilterVC.sliderValue ?? 0, APIKeys.kPublicInterest : U_HomeFilterVC.selectedPublicArray.joined(separator:","), APIKeys.kMusicInterest : U_HomeFilterVC.selectedMusicArray.joined(separator:","), APIKeys.kEventDate : filteredDate ?? ""] as JSONDictionary
+        } else {
+            U_HomeFilterVC.searchSelectedPublicArray = (selectedPublicCategoryArray.compactMap({$0.id})).map{String($0)}
+            U_HomeFilterVC.searchSelectedMusicArray = (selectedMusicCategoryArray.compactMap({$0.id})).map{String($0)}
+            U_HomeFilterVC.searchRemainingPublicArray = (userPublicCategoryArray.compactMap({$0.id})).map{String($0)}
+            U_HomeFilterVC.searchRemainingMusicArray = (userMusicCategoryArray.compactMap({$0.id})).map{String($0)}
+            dict = [APIKeys.kFilter : U_HomeFilterVC.searchFilter ?? "", APIKeys.kLat : U_HomeFilterVC.searchSliderValue == 0 ? "" : U_HomeFilterVC.currentLatitude ?? 0.0, APIKeys.kLong : U_HomeFilterVC.searchSliderValue == 0 ? "" : U_HomeFilterVC.currentLongitude ?? 0.0, APIKeys.kMiles : U_HomeFilterVC.searchSliderValue == 0 ? "" : U_HomeFilterVC.searchSliderValue ?? 0, APIKeys.kPublicInterest : U_HomeFilterVC.searchSelectedPublicArray.joined(separator:","), APIKeys.kMusicInterest : U_HomeFilterVC.searchSelectedMusicArray.joined(separator:","), APIKeys.kEventDate : filteredDate ?? ""] as JSONDictionary
+        }
+        if previousScreen == .main {
+            if U_HomeFilterVC.filter == "" {
+                delegate?.setFilteredData?(object: JSONDictionary())
+            } else {
+                delegate?.setFilteredData?(object: dict)
+            }
+        } else {
+            if U_HomeFilterVC.searchFilter == "" {
+                delegate?.setFilteredData?(object: JSONDictionary())
+            } else {
+                delegate?.setFilteredData?(object: dict)
+            }
+        }
+    }
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+    }
+    
+    
+    // MARK: - Private functions
+    private func customizeUI() {
+        setTitle(title: kFilter)
+        setBackButton(image: #imageLiteral(resourceName: "cross"))
+        setRightButton(image: nil, title: kReset)
+        setupSlider()
+        if previousScreen == .main {
+            eventSearchLabel.text = "I'M LOOKING FOR AN EVENT WITHIN \(U_HomeFilterVC.sliderValue ?? 0) MILES"
+            dateTextField.text = U_HomeFilterVC.selectedDate != nil ? U_HomeFilterVC.selectedDate?.stringFromDate(format: .longMDYDate, type: .local) : ""
+        } else {
+            eventSearchLabel.text = "I'M LOOKING FOR AN EVENT WITHIN \(U_HomeFilterVC.searchSliderValue ?? 0) MILES"
+            dateTextField.text = U_HomeFilterVC.searchSelectedDate != nil ? U_HomeFilterVC.searchSelectedDate?.stringFromDate(format: .longMDYDate, type: .local) : ""
+        }
+        let layout = moodSongSubCollectionView.collectionViewLayout as! UICollectionViewFlowLayout
+        layout.minimumInteritemSpacing = 10
+        moodSongSubCollectionView.layoutIfNeeded()
+        dateTextField.set(radius: 14.0)
+        
+    }
+    
+    override func rightButtonAction(sender: UIButton) {
+        resetData()
+    }
+    
+    private func resetData() {
+        slider.value = 0.0
+        if previousScreen == .main {
+            U_HomeFilterVC.sliderValue = 0
+            U_HomeFilterVC.filter = ""
+            U_HomeFilterVC.selectedDate = nil
+        } else {
+            U_HomeFilterVC.searchSliderValue = 0
+            U_HomeFilterVC.searchFilter = ""
+            U_HomeFilterVC.searchSelectedDate = nil
+        }
+        eventSearchLabel.text = "I'M LOOKING FOR AN EVENT WITHIN 0 MILES"
+        dateTextField.text = ""
+        dateTextField.resignFirstResponder()
+        for interest in selectedPublicCategoryArray {
+            userPublicCategoryArray.append(interest)
+        }
+        for interest in selectedMusicCategoryArray {
+            userMusicCategoryArray.append(interest)
+        }
+        selectedPublicCategoryArray.removeAll()
+        selectedMusicCategoryArray.removeAll()
+        moodSongCollectionView.reloadData()
+        moodSongSubCollectionView.reloadData()
+        demandCollectionView.reloadData()
+        demandSubCollectionView.reloadData()
+    }
+    private func handleAddress(coordinate: CLLocationCoordinate2D) {
+        LocationManager.shared.getAddress(location: coordinate) { (address) in
+            self.locationLabel.text = "MY LOCATION IS \(address)"
+            U_HomeFilterVC.currentLatitude = coordinate.latitude
+            U_HomeFilterVC.currentLongitude = coordinate.longitude
+        }
+    }
+    
+    private func handleLocation() {
+        LocationManager.shared.askPermissionsAndFetchLocationWithCompletion { (location, placemark, error) in
+            if error ==  nil {
+                self.handleAddress(coordinate: location!.coordinate)
+            }
+        }
+    }
+    
+    private func updateCollectionViewHeight() {
+        demandSubCollectionView.isScrollEnabled = false
+        moodSongSubCollectionView.isScrollEnabled = false
+        let demandHeight = demandSubCollectionView.collectionViewLayout.collectionViewContentSize.height + 20
+        demandSubSongViewHeight.constant = demandHeight
+        let moodSongHeight = moodSongSubCollectionView.collectionViewLayout.collectionViewContentSize.height + 20
+        moodSubSongViewHeight.constant = moodSongHeight
+    }
+    
+    private func handleCategories() {
+        if previousScreen == .main {
+            if U_HomeFilterVC.selectedPublicArray.count != 0 {
+                for interest in U_HomeFilterVC.selectedPublicArray {
+                    if let index = CommonVM.shared.publicArray.firstIndex(where: {$0.id == Int(interest)}) {
+                        selectedPublicCategoryArray.append( CommonVM.shared.publicArray[index])
+                    }
+                }
+                for interest in U_HomeFilterVC.remainingPublicArray {
+                    if let index = CommonVM.shared.publicArray.firstIndex(where: {$0.id == Int(interest)}) {
+                        userPublicCategoryArray.append( CommonVM.shared.publicArray[index])
+                    }
+                }
+                if self.userPublicCategoryArray.count == 0 && selectedPublicCategoryArray.count == 0 {
+                    self.moodSongsView.isHidden = true
+                    self.moodSubSongView.isHidden = true
+                    self.moodLabel.isHidden = true
+                }
+            } else {
+                for interest in DataManager.userPublicInterests {
+                    if let index = CommonVM.shared.publicArray.firstIndex(where: {$0.id == Int(interest)}) {
+                        userPublicCategoryArray.append( CommonVM.shared.publicArray[index])
+                    }
+                }
+                if self.userPublicCategoryArray.count == 0 {
+                    self.moodSongsView.isHidden = true
+                    self.moodSubSongView.isHidden = true
+                    self.moodLabel.isHidden = true
+                }
+            }
+            if U_HomeFilterVC.selectedMusicArray.count != 0 {
+                for interest in U_HomeFilterVC.selectedMusicArray {
+                    if let index = CommonVM.shared.musicArray.firstIndex(where: {$0.id == Int(interest)}) {
+                        selectedMusicCategoryArray.append( CommonVM.shared.musicArray[index])
+                    }
+                }
+                for interest in U_HomeFilterVC.remainingMusicArray {
+                    if let index = CommonVM.shared.publicArray.firstIndex(where: {$0.id == Int(interest)}) {
+                        userMusicCategoryArray.append( CommonVM.shared.publicArray[index])
+                    }
+                }
+                if self.userMusicCategoryArray.count == 0 && self.selectedMusicCategoryArray.count == 0 {
+                    self.demandLabel.isHidden = true
+                    self.demandSongsView.isHidden = true
+                    self.demandSubSongView.isHidden = true
+                }
+            } else {
+                for interest in DataManager.userMusicInterests {
+                    if let index = CommonVM.shared.musicArray.firstIndex(where: {$0.id == Int(interest)}) {
+                        userMusicCategoryArray.append( CommonVM.shared.musicArray[index])
+                    }
+                }
+                if self.userMusicCategoryArray.count == 0 {
+                    self.demandLabel.isHidden = true
+                    self.demandSongsView.isHidden = true
+                    self.demandSubSongView.isHidden = true
+                }
+            }
+        } else {
+            if U_HomeFilterVC.searchSelectedPublicArray.count != 0 {
+                for interest in U_HomeFilterVC.searchSelectedPublicArray {
+                    if let index = CommonVM.shared.publicArray.firstIndex(where: {$0.id == Int(interest)}) {
+                        selectedPublicCategoryArray.append( CommonVM.shared.publicArray[index])
+                    }
+                }
+                for interest in U_HomeFilterVC.searchRemainingPublicArray {
+                    if let index = CommonVM.shared.publicArray.firstIndex(where: {$0.id == Int(interest)}) {
+                        userPublicCategoryArray.append( CommonVM.shared.publicArray[index])
+                    }
+                }
+                if self.userPublicCategoryArray.count == 0 && selectedPublicCategoryArray.count == 0 {
+                    self.moodSongsView.isHidden = true
+                    self.moodSubSongView.isHidden = true
+                    self.moodLabel.isHidden = true
+                }
+            } else {
+                for interest in DataManager.userPublicInterests {
+                    if let index = CommonVM.shared.publicArray.firstIndex(where: {$0.id == Int(interest)}) {
+                        userPublicCategoryArray.append( CommonVM.shared.publicArray[index])
+                    }
+                }
+                if self.userPublicCategoryArray.count == 0 {
+                    self.moodSongsView.isHidden = true
+                    self.moodSubSongView.isHidden = true
+                    self.moodLabel.isHidden = true
+                }
+            }
+            if U_HomeFilterVC.searchSelectedMusicArray.count != 0 {
+                for interest in U_HomeFilterVC.searchSelectedMusicArray {
+                    if let index = CommonVM.shared.musicArray.firstIndex(where: {$0.id == Int(interest)}) {
+                        selectedMusicCategoryArray.append( CommonVM.shared.musicArray[index])
+                    }
+                }
+                for interest in U_HomeFilterVC.searchRemainingMusicArray {
+                    if let index = CommonVM.shared.publicArray.firstIndex(where: {$0.id == Int(interest)}) {
+                        userMusicCategoryArray.append( CommonVM.shared.publicArray[index])
+                    }
+                }
+                if self.userMusicCategoryArray.count == 0 && self.selectedMusicCategoryArray.count == 0 {
+                    self.demandLabel.isHidden = true
+                    self.demandSongsView.isHidden = true
+                    self.demandSubSongView.isHidden = true
+                }
+            } else {
+                for interest in DataManager.userMusicInterests {
+                    if let index = CommonVM.shared.musicArray.firstIndex(where: {$0.id == Int(interest)}) {
+                        userMusicCategoryArray.append( CommonVM.shared.musicArray[index])
+                    }
+                }
+                if self.userMusicCategoryArray.count == 0 {
+                    self.demandLabel.isHidden = true
+                    self.demandSongsView.isHidden = true
+                    self.demandSubSongView.isHidden = true
+                }
+            }
+        }
+        self.moodSongSubCollectionView.reloadData()
+        self.demandSubCollectionView.reloadData()
+        self.moodSongCollectionView.reloadData()
+        self.demandCollectionView.reloadData()
+        self.updateCollectionViewHeight()
+    }
+    
+    //MARK: - CUSTOMISE RADIUS SLIDER
+    func setupSlider(){
+        slider.minimumValue = 1
+        slider.maximumValue = 100
+        if previousScreen == .main {
+            slider.value = Float(U_HomeFilterVC.sliderValue ?? 0)
+        } else {
+            slider.value = Float(U_HomeFilterVC.searchSliderValue ?? 0)
+        }
+        slider.setThumbImage(#imageLiteral(resourceName: "thumbImage"), for: .normal)
+        slider.setThumbImage(#imageLiteral(resourceName: "thumbImage"), for: .highlighted)
+        slider.setThumbImage(#imageLiteral(resourceName: "thumbImage"), for: .normal)
+        slider.setThumbImage(#imageLiteral(resourceName: "thumbImage"), for: .highlighted)
+    }
+    
+    // MARK: - IBActions
+    @IBAction func sliderAction(_ sender: Any) {
+        if previousScreen == .main {
+            U_HomeFilterVC.filter = "1"
+            U_HomeFilterVC.sliderValue = Int(Double(slider.value).changeToInt) ?? 0
+            eventSearchLabel.text = "I'M LOOKING FOR AN EVENT WITHIN \(U_HomeFilterVC.sliderValue ?? 0) MILES"
+        } else {
+            U_HomeFilterVC.searchFilter = "1"
+            U_HomeFilterVC.searchSliderValue = Int(Double(slider.value).changeToInt) ?? 0
+            eventSearchLabel.text = "I'M LOOKING FOR AN EVENT WITHIN \(U_HomeFilterVC.searchSliderValue ?? 0) MILES"
+        }
+    }
+    
+    @IBAction func previousNextAction(_ sender: UIButton) {
+        if sender.tag == 1 { //Previous Mood
+            if selectedPublicCategoryArray.count == 0 {
+                return
+            }
+            if moodIndex > 0 {
+                moodSongCollectionView.scrollToItem(at: IndexPath(row: moodIndex-1, section: 0), at: .left, animated: true)
+                moodIndex -= 1
+            }
+        } else if sender.tag == 2 { //Next Mood
+            if selectedPublicCategoryArray.count == 0 {
+                return
+            }
+            if (moodIndex + 1) < selectedPublicCategoryArray.count {
+                moodSongCollectionView.scrollToItem(at: IndexPath(row: moodIndex+1, section: 0), at: .right, animated: true)
+                moodIndex += 1
+            }
+        } else if sender.tag == 3 { //Previous Demand
+            if selectedMusicCategoryArray.count == 0 {
+                return
+            }
+            if demandIndex > 0 {
+                demandCollectionView.scrollToItem(at: IndexPath(row: demandIndex-1, section: 0), at: .left, animated: true)
+                demandIndex -= 1
+            }
+        } else { //Next Demand
+            if selectedMusicCategoryArray.count == 0 {
+                return
+            }
+            if (demandIndex + 1) < selectedMusicCategoryArray.count {
+                demandCollectionView.scrollToItem(at: IndexPath(row: demandIndex+1, section: 0), at: .right, animated: true)
+                demandIndex += 1
+            }
+        }
+    }
+    
+    //MARK: TextField Actions
+    @IBAction func textFieldDidChange(_ sender: UITextField) {
+        dateTextField.text!.count > 0 ? dateTextField.setShadow(): dateTextField.removeShadow()
+        dateTextField.text!.count > 0 ? dateTextField.addBackground(): dateTextField.removeBackground()
+    }
+    
+}
+//MARK: UICollectionView Delegates and Datasources
+extension U_HomeFilterVC: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout{
+    func numberOfSections(in collectionView: UICollectionView) -> Int {
+        return 1
+    }
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        if collectionView == moodSongCollectionView{
+            return selectedPublicCategoryArray.count
+        }
+        if collectionView == moodSongSubCollectionView{
+            return userPublicCategoryArray.count
+        }
+        if collectionView == demandCollectionView{
+            return selectedMusicCategoryArray.count
+        }
+        if collectionView == demandSubCollectionView{
+            return userMusicCategoryArray.count
+        }
+        return 2
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: kSongAlbumCell, for: indexPath) as! SongAlbumCell
+        if collectionView == moodSongSubCollectionView {
+            cell.albumImageView.sd_setImage(with: userPublicCategoryArray[indexPath.row].image, placeholderImage: nil, options: .cacheMemoryOnly, completed: nil)
+            cell.titleLabel.text = userPublicCategoryArray[indexPath.row].name
+        } else if collectionView == demandSubCollectionView {
+            cell.albumImageView.sd_setImage(with: userMusicCategoryArray[indexPath.row].image, placeholderImage: nil, options: .cacheMemoryOnly, completed: nil)
+            cell.titleLabel.text = userMusicCategoryArray[indexPath.row].name
+        } else if collectionView == moodSongCollectionView {
+            cell.albumImageView.sd_setImage(with: selectedPublicCategoryArray[indexPath.row].image, placeholderImage: nil, options: .cacheMemoryOnly, completed: nil)
+            cell.titleLabel.text = selectedPublicCategoryArray[indexPath.row].name
+            cell.crossButton.addTarget(self, action: #selector(self.moodMusicCrossButtonAction(sender:)), for: .touchUpInside)
+            cell.crossButton.tag = indexPath.row
+        } else if collectionView == demandCollectionView {
+            cell.albumImageView.sd_setImage(with: selectedMusicCategoryArray[indexPath.row].image, placeholderImage: nil, options: .cacheMemoryOnly, completed: nil)
+            cell.titleLabel.text = selectedMusicCategoryArray[indexPath.row].name
+            cell.crossButton.addTarget(self, action: #selector(self.demandCrossButtonAction(sender:)), for: .touchUpInside)
+            cell.crossButton.tag = indexPath.row
+        }
+        return cell
+    }
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        if collectionView == demandSubCollectionView || collectionView == moodSongSubCollectionView{
+            return CGSize(width: 100, height: 90)
+        }else{
+            return CGSize(width: (collectionView.frame.width - 20)/2, height: 100)
+        }
+    }
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        if collectionView == moodSongSubCollectionView {
+            if previousScreen == .main {
+                U_HomeFilterVC.filter = "1"
+            } else {
+                U_HomeFilterVC.searchFilter = "1"
+            }
+            selectedPublicCategoryArray.append(userPublicCategoryArray[indexPath.row])
+            userPublicCategoryArray.remove(at: indexPath.row)
+            moodSongCollectionView.reloadData()
+            moodSongSubCollectionView.reloadData()
+            self.updateCollectionViewHeight()
+        } else if collectionView == demandSubCollectionView {
+            if previousScreen == .main {
+                U_HomeFilterVC.filter = "1"
+            } else {
+                U_HomeFilterVC.searchFilter = "1"
+            }
+            selectedMusicCategoryArray.append(userMusicCategoryArray[indexPath.row])
+            userMusicCategoryArray.remove(at: indexPath.row)
+            demandCollectionView.reloadData()
+            demandSubCollectionView.reloadData()
+            self.updateCollectionViewHeight()
+        }
+    }
+    
+    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        let moodindexPaths = moodSongCollectionView.indexPathsForVisibleItems
+        moodIndex = moodindexPaths.first?.row ?? 0
+        let demandindexPaths = demandCollectionView.indexPathsForVisibleItems
+        demandIndex = demandindexPaths.first?.row ?? 0
+    }
+    
+    @objc func demandCrossButtonAction(sender: UIButton) {
+        userMusicCategoryArray.append(selectedMusicCategoryArray[sender.tag])
+        demandSubCollectionView.reloadData()
+        if selectedMusicCategoryArray.count == 1 {
+            if previousScreen == .main {
+                U_HomeFilterVC.filter = "1"
+            } else {
+                U_HomeFilterVC.searchFilter = "1"
+            }
+        }
+        selectedMusicCategoryArray.remove(at: sender.tag)
+        demandCollectionView.reloadData()
+        self.updateCollectionViewHeight()
+        let demandindexPaths = demandCollectionView.indexPathsForVisibleItems
+        demandIndex = demandindexPaths.first?.row ?? 0
+    }
+    
+    @objc func moodMusicCrossButtonAction(sender: UIButton) {
+        userPublicCategoryArray.append(selectedPublicCategoryArray[sender.tag])
+        moodSongSubCollectionView.reloadData()
+        if selectedPublicCategoryArray.count == 1 {
+            if previousScreen == .main {
+                U_HomeFilterVC.filter = "1"
+            } else {
+                U_HomeFilterVC.searchFilter = "1"
+            }
+        }
+        selectedPublicCategoryArray.remove(at: sender.tag)
+        moodSongCollectionView.reloadData()
+        self.updateCollectionViewHeight()
+        let moodindexPaths = moodSongCollectionView.indexPathsForVisibleItems
+        moodIndex = moodindexPaths.first?.row ?? 0
+    }
+}
+extension U_HomeFilterVC: UITextFieldDelegate {
+    
+    func textFieldDidBeginEditing(_ textField: UITextField) {
+        textField.tintColor = UIColor.clear
+        if previousScreen == .main {
+            self.setDatePicker(textField: textField, mode: .date, maxdate: nil, date: U_HomeFilterVC.selectedDate, minDate: Date())
+            dateTextField.text = U_HomeFilterVC.selectedDate?.stringFromDate(format: .longMDYDate, type: .local)
+        } else {
+            self.setDatePicker(textField: textField, mode: .date, maxdate: nil, date: U_HomeFilterVC.searchSelectedDate, minDate: Date())
+            dateTextField.text = U_HomeFilterVC.searchSelectedDate?.stringFromDate(format: .longMDYDate, type: .local)
+            
+        }
+    }
+}
+
+//MARK: Custom Picker Delegates
+extension U_HomeFilterVC: PickerDelegate {
+    
+    func didSelectDatePicker(date: Date) {
+        if previousScreen == .main {
+            U_HomeFilterVC.filter = "1"
+            U_HomeFilterVC.selectedDate = date
+        } else {
+            U_HomeFilterVC.searchFilter = "1"
+            U_HomeFilterVC.searchSelectedDate = date
+        }
+        dateTextField.text = date.stringFromDate(format: .longMDYDate, type: .local)
+    }
+}
+
+//MARK: API methods
+extension U_HomeFilterVC {
+    
+    func getPublicInterest() {
+        CommonVM.shared.getPublicInterest { (message, error) in
+            if error != nil {
+                self.showErrorMessage(error: error)
+            }
+            else {
+                self.getMusicInterest()
+            }
+        }
+    }
+    
+    func getMusicInterest() {
+        CommonVM.shared.getMusicInterest { (message, error) in
+            if error != nil {
+                self.showErrorMessage(error: error)
+            }
+            else {
+                self.handleCategories()
+            }
+        }
+    }
+}

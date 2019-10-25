@@ -1,0 +1,154 @@
+//
+//  PostCommentsVC.swift
+//  MoTiv
+//
+//  Created by Apple on 06/02/19.
+//  Copyright © 2019 MoTiv. All rights reserved.
+//
+
+import UIKit
+
+class PostCommentsVC: BaseVC {
+    
+//MARK: IBOutlets
+    @IBOutlet var tableView: UITableView!
+    @IBOutlet var commentButton: UIButton!
+    @IBOutlet var textView: UITextView!
+    @IBOutlet var iconImageView: UIImageView!
+    @IBOutlet var textViewBackView: UIView!
+    
+    
+//MARK: Variables
+    var selectedSection = -1
+    var section : Int?
+    var comment = kEnterComment
+    var selectedIndex = Int()
+    var postList : [PostList]?
+    var commentList : [CommentList]?
+    var indexofPage:Int = 1
+    var postID : Int?
+
+//MARK: Class Life Cycle
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        customiseUI()
+        getCommentList()
+    }
+    
+//MARK: Private Functions
+    
+    private func customiseUI() {
+        setTitle(title: kComments)
+        setBackButton()
+        textViewBackView.set(radius: 14.0)
+        textView.delegate = self
+        textView.text == kEnterComment ? textViewBackView.removeShadow(): textViewBackView.setShadow()
+        iconImageView.image = textView.text == kEnterComment ? #imageLiteral(resourceName: "commentUnSelected"): #imageLiteral(resourceName: "commentSelected")
+        commentButton.set(radius: 14.0)
+        commentButton.setBackgroundImage(commentButton.graidentImage, for: .normal)
+    }
+    
+    
+    func setDataForComment() -> JSONDictionary {
+        var dict = JSONDictionary()
+        dict[APIKeys.kPostID] = self.postID
+        return dict
+    }
+}
+
+//MARK: UITableView DataSource and Delegate
+extension PostCommentsVC : UITableViewDataSource, UITableViewDelegate {
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return 20 //EventVM.shared.commentListArray?.count ?? 0
+    }
+    
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: kCommentCell) as! CommentCell
+        cell.profileImageView.sd_setImage(with: URL(string: EventVM.shared.commentListArray?[indexPath.row].imageURL ?? ""), placeholderImage: #imageLiteral(resourceName: "userPlaceholderWhite"), options: .cacheMemoryOnly, completed: nil)
+        cell.commentLabel.text = EventVM.shared.commentListArray?[indexPath.row].comment
+        return cell
+    }
+}
+
+//MARK: Textview Delegates
+extension PostCommentsVC: UITextViewDelegate {
+    
+    func textViewDidBeginEditing(_ textView: UITextView) {
+        textView.text = ""
+        textViewBackView.removeShadow()
+        iconImageView.image = #imageLiteral(resourceName: "commentUnSelected")
+    }
+    
+    func textViewDidEndEditing(_ textView: UITextView) {
+        textView.text = textView.text.isEmpty ? kEnterComment: textView.text
+        textView.text == kEnterComment ? textViewBackView.removeShadow(): textViewBackView.setShadow()
+        iconImageView.image = textView.text == kEnterComment ? #imageLiteral(resourceName: "commentUnSelected"): #imageLiteral(resourceName: "commentSelected")
+    }
+    
+    func textViewDidChange(_ textView: UITextView) {
+        comment = textView.text!
+        textView.text!.isEmpty ? textViewBackView.removeShadow(): textViewBackView.setShadow()
+        iconImageView.image = textView.text!.isEmpty ? #imageLiteral(resourceName: "commentUnSelected"): #imageLiteral(resourceName: "commentSelected")
+    }
+}
+
+//MARK: UIScrollViewDelegate
+//extension PostCommentsVC {
+//    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView)
+//    {
+//        if (tableView!.contentOffset.y + tableView!.frame.height) >= (tableView!.contentSize.height - 50) {
+//            if (commentList?.count ?? 0) > 0 {
+//                indexofPage = indexofPage + 1
+//                getCommentList()
+//            }
+//        }
+//    }
+//}
+
+//MARK: API Methods
+
+extension PostCommentsVC {
+    func getCommentList(){
+        EventVM.shared.getCommentList(dict: setDataForComment()){ (message, error) in
+            if error != nil{
+                self.showErrorMessage(error: error)
+            } else{
+                self.commentList = EventVM.shared.commentListArray
+                self.tableView.reloadData()
+            }
+        }
+    }
+}
+
+
+
+
+    
+//    func getCommentList(){
+//        if indexofPage == 1 {
+//            EventVM.shared.commentListArray?.removeAll()
+//            self.commentList?.removeAll()
+//            self.tableView.reloadData()
+//        }
+//        EventVM.shared.getCommentList(dict: setDataForComment()){ (message, error) in
+//            if error != nil{
+//                self.indexofPage = self.indexofPage - 1
+//                self.showErrorMessage(error: error)
+//            } else{
+//                if self.indexofPage == (EventVM.shared.commentLastPage ?? 0) {
+//                    self.indexofPage = self.indexofPage - 1
+//                }
+//                self.commentList?.removeAll()
+//                self.commentList = EventVM.shared.commentListArray
+//                self.tableView.reloadData()
+//            }
+//        }
+//    }
+

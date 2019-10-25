@@ -1,0 +1,110 @@
+//
+//  EventVM.swift
+//  MoTiv
+//
+//  Created by IOS on 18/12/18.
+//  Copyright © 2018 MoTiv. All rights reserved.
+//
+
+import Foundation
+
+class EventVM {
+    public static let shared = EventVM()
+    private init() {}
+    
+    
+    //MARK: Arrays
+    var eventDetailArray: [EventDetail]?
+    var guestListArray: [GuestList]?
+    var postListArray: [PostList]?
+    var commentListArray: [CommentList]?
+    var ticketListArray: [TicketList]?
+
+    //MARK: Variables
+    var eventLastPage : Int?
+    var postLastPage : Int?
+
+    // MARK: API Calls
+    func createEvent(dict: JSONDictionary, imageDict: [String: Data], response: @escaping responseCallBack) {
+        APIManager.createEvent(dict: dict, imageDict: imageDict, successCallback: { (responseDict) in
+            let message = responseDict[APIKeys.kMessage] as? String ?? APIManager.OTHER_ERROR
+            response(message, nil)
+        }) { (errorReason, error) in
+            response(nil, APIManager.errorForNetworkErrorReason(errorReason: errorReason!))
+        }
+    }
+    
+    func getEventList(dict: JSONDictionary, response: @escaping responseCallBack){
+        APIManager.getEventList(dict: dict, successCallback: { (responseDict) in
+            print(responseDict)
+            self.parseEventList(response: responseDict)
+            let message = responseDict[APIKeys.kMessage] as? String ?? APIManager.OTHER_ERROR
+            response(message, nil)
+        }) { (errorReason, error) in
+              response(nil, APIManager.errorForNetworkErrorReason(errorReason: errorReason!))
+        }
+    }
+    
+    func getGuestList(dict: JSONDictionary, response: @escaping responseCallBack){
+        APIManager.getGuestList(dict: dict, successCallback: { (responseDict) in
+            print(responseDict)
+            self.parseGuestList(response: responseDict)
+            let message = responseDict[APIKeys.kMessage] as? String ?? APIManager.OTHER_ERROR
+            response(message, nil)
+        }) { (errorReason, error) in
+            response(nil, APIManager.errorForNetworkErrorReason(errorReason: errorReason!))
+        }
+    }
+    
+    func getPostList(dict: JSONDictionary, response: @escaping responseCallBack){
+        APIManager.getPostList(dict: dict, successCallback: { (responseDict) in
+            print(responseDict)
+            self.parsePostList(response: responseDict)
+            let message = responseDict[APIKeys.kMessage] as? String ?? APIManager.OTHER_ERROR
+            response(message, nil)
+        }) { (errorReason, error) in
+            response(nil, APIManager.errorForNetworkErrorReason(errorReason: errorReason!))
+        }
+    }
+    
+    func getCommentList(dict: JSONDictionary, response: @escaping responseCallBack){
+        APIManager.getCommentList(dict: dict, successCallback: { (responseDict) in
+            print(responseDict)
+            self.parseCommentList(response: responseDict)
+            let message = responseDict[APIKeys.kMessage] as? String ?? APIManager.OTHER_ERROR
+            response(message, nil)
+        }) { (errorReason, error) in
+            response(nil, APIManager.errorForNetworkErrorReason(errorReason: errorReason!))
+        }
+    }
+    
+    func getTicketList(dict: JSONDictionary, response: @escaping responseCallBack){
+        APIManager.getTicketList(dict: dict, successCallback: { (responseDict) in
+            print(responseDict)
+            self.parseTicketList(response: responseDict)
+            let message = responseDict[APIKeys.kMessage] as? String ?? APIManager.OTHER_ERROR
+            response(message, nil)
+        }) { (errorReason, error) in
+            response(nil, APIManager.errorForNetworkErrorReason(errorReason: errorReason!))
+        }
+    }
+    
+    func likePost(dict: JSONDictionary, response: @escaping responseCallBack){
+        APIManager.likePost(dict: dict, successCallback: { (responseDict) in
+            print(responseDict)
+            let message = responseDict[APIKeys.kMessage] as? String ?? APIManager.OTHER_ERROR
+            response(message, nil)
+        }) { (errorReason, error) in
+            response(nil, APIManager.errorForNetworkErrorReason(errorReason: errorReason!))
+        }
+    }
+    func createPost(dict: JSONDictionary, imageDict: [String: Data], response: @escaping responseCallBack){
+        APIManager.createPost(dict: dict, imageDict: imageDict, successCallback: { (responseDict) in
+            print(responseDict)
+            let message = responseDict[APIKeys.kMessage] as? String ?? APIManager.OTHER_ERROR
+            response(message, nil)
+        }) { (errorReason, error) in
+            response(nil, APIManager.errorForNetworkErrorReason(errorReason: errorReason!))
+        }
+    }
+}

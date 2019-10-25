@@ -1,0 +1,50 @@
+//
+//  TabBarVC.swift
+//  MoTiv
+//
+//  Created by IOS on 27/11/18.
+//  Copyright © 2018 MoTiv. All rights reserved.
+//
+
+import UIKit
+
+class TabBarVC: UITabBarController {
+    
+    fileprivate lazy var defaultTabBarHeight = { tabBar.frame.size.height }()
+
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        self.tabBar.backgroundImage = UIImage()
+        self.selectedIndex = 0
+        tabBar.layer.borderWidth = 0.5
+        tabBar.layer.borderColor = UIColor.motivColor.darkBaseColor.color().cgColor
+        tabBar.clipsToBounds = true
+        
+    }
+    
+    override func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
+        let attribute = [NSAttributedString.Key.foregroundColor : UIColor.white] as! [NSAttributedString.Key: Any]
+       self.tabBarItem.setTitleTextAttributes(attribute, for: .normal)
+        UITabBarItem.appearance().setTitleTextAttributes(attribute, for: .normal)
+        UITabBarItem.appearance().setTitleTextAttributes(attribute, for: .selected)
+    }
+    
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        return .lightContent
+    }
+}
+
+
+class CustomTabBar : UITabBar {
+    @IBInspectable var height: CGFloat = 50.0
+    
+    override func sizeThatFits(_ size: CGSize) -> CGSize {
+        var sizeThatFits = super.sizeThatFits(size)
+        if height > 0.0 {
+            sizeThatFits.height = height
+        }
+        return sizeThatFits
+    }
+}

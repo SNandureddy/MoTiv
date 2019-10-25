@@ -1,0 +1,23 @@
+//
+//  EventVM.swift
+//  MoTiv
+//
+//  Created by IOS on 18/12/18.
+//  Copyright © 2018 MoTiv. All rights reserved.
+//
+
+import Foundation
+
+class EventVM {
+    public static let shared = EventVM()
+    private init() {}
+    
+    func createEvent(dict: JSONDictionary, imageDict: [String: Data], response: @escaping responseCallBack) {
+        APIManager.createEvent(dict: dict, imageDict: imageDict, successCallback: { (responseDict) in
+            let message = responseDict[APIKeys.kMessage] as? String ?? APIManager.OTHER_ERROR
+            response(message, nil)
+        }) { (errorReason, error) in
+            response(nil, APIManager.errorForNetworkErrorReason(errorReason: errorReason!))
+        }
+    }
+}

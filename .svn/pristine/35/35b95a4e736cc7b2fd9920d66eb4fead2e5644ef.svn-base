@@ -1,0 +1,143 @@
+//
+//  AddImageVC.swift
+//  MoTiv
+//
+//  Created by IOS on 05/12/18.
+//  Copyright © 2018 MoTiv. All rights reserved.
+//
+
+import UIKit
+import AVKit
+import AVFoundation
+
+
+class AddImageVC: BaseVC {
+    
+    //MARK IBOutlets
+    @IBOutlet weak var imageView1: UIImageView!
+    @IBOutlet weak var imageView2: UIImageView!
+    @IBOutlet weak var nextButton: UIButton!
+    @IBOutlet var mainButtonCollection: [UIButton]!
+    
+    //MARK: Variables
+    var delegate: TabViewDelegate!
+    var main = 0
+    var video1: URL?
+    var video2: URL?
+    var selectedImage = 1
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        self.customiseUI()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        if !DataManager.isLoggedIn {
+            self.showAlert(title: kLoginNow, message: kLoginAlert, okayTitle: kOkay) {
+                self.logout()
+            }
+        }
+    }
+    
+    //MARK: Private Methods
+    private func customiseUI() {
+        nextButton.set(radius: 14.0)
+        nextButton.setBackgroundImage(nextButton.graidentImage, for: .normal)
+    }
+    
+    //MARK: IBActions
+    @IBAction func addImageButtonAction(_ sender: UIButton) { //1: Up, 2: Down
+        selectedImage = sender.tag
+        CustomImagePickerView.sharedInstace.delegate = self
+        self.showImagePicker(showVideo: true)
+    }
+    
+    @IBAction func selectMainAction(_ sender: UIButton) { //3: Up, 4: Down
+        for button in mainButtonCollection {
+            button.isSelected = false
+        }
+        sender.isSelected = true
+        main = sender.tag
+    }
+    
+    @IBAction func nextButtonAction(_ sender: UIButton) {
+       
+        if let message = validateData() {
+            self.showAlert(message: message)
+            return
+        }
+        if main == 3 {
+            O_CreateMainVC.imageDict[APIKeys.kEventImageURL] = imageView1.image!.imageData
+            if let video = video1 {
+                O_CreateMainVC.imageDict[APIKeys.kEventVideoURL] = try! Data(contentsOf: video)
+            }
+            O_CreateMainVC.imageDict[APIKeys.kEventImageURL2] = imageView2.image!.imageData
+            if let video = video2 {
+                O_CreateMainVC.imageDict[APIKeys.kEventVideoURL2] = try! Data(contentsOf: video)
+            }
+        }
+        else {
+            O_CreateMainVC.imageDict[APIKeys.kEventImageURL] = imageView2.image!.imageData
+            if let video = video2 {
+                O_CreateMainVC.imageDict[APIKeys.kEventVideoURL] = try! Data(contentsOf: video)
+            }
+            O_CreateMainVC.imageDict[APIKeys.kEventImageURL2] = imageView1.image!.imageData
+            if let video = video1 {
+                O_CreateMainVC.imageDict[APIKeys.kEventVideoURL2] = try! Data(contentsOf: video)
+            }
+        }
+        delegate.didClickTab(tag: 2)
+    }
+}
+
+extension AddImageVC {
+    
+    func validateData() -> String? {
+        if imageView1.image == nil || imageView2.image == nil {
+            return kImageValidation
+        }
+        if main == 0 {
+            return kMainValidation
+        }
+        return nil
+    }
+}
+
+
+extension AddImageVC: CustomImagePickerDelegate {
+    
+    func didImagePickerFinishPicking(_ image: UIImage) {
+        if selectedImage == 1 {
+            video1 = nil
+            imageView1.image = image
+        }
+        else {
+            video2 = nil
+            imageView2.image = image
+        }
+    }
+    
+    func didVideoPickerFinishPicking(_ video: URL) {
+        let asset = AVURLAsset(url: video)
+        let durationInSeconds = asset.duration.seconds
+        if durationInSeconds <= 60.0 {
+            let image = self.getThumbnailFrom(path: video)
+            if selectedImage == 1 {
+                video1 = video
+                imageView1.image = image ?? #imageLiteral(resourceName: "blackImage")
+            }
+            else {
+                video2 = video
+                imageView2.image = image ?? #imageLiteral(resourceName: "blackImage")
+            }
+        }
+        else {
+            self.showAlert(message: kVideoLimt)
+        }
+    }
+}

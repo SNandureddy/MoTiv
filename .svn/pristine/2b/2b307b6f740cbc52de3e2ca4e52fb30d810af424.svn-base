@@ -1,0 +1,164 @@
+//
+//  EventDataModel.swift
+//  MoTiv
+//
+//  Created by Apple on 01/02/19.
+//  Copyright © 2019 MoTiv. All rights reserved.
+//
+
+import Foundation
+import UIKit
+
+struct EventDetail {
+    var eventName : String?
+    var ticketAmount : Int?
+    var eventImageURL : String?
+    var eventVideoURL : String?
+    var eventImage : UIImage?
+    var eventDate : String?
+    var guestCount: Int?
+    var eventLocation: String?
+    var eventDescription: String?
+    var eventLatitude: Double?
+    var eventLongitude: Double?
+    var ticketCount: Int?
+    var eventID: Int?
+    
+    init(details: JSONDictionary) {
+        self.eventName = details[APIKeys.kEventName] as? String
+        self.ticketAmount = details[APIKeys.kTicketAmount] as? Int
+        self.eventVideoURL = details[APIKeys.kEventVideoURL] as? String
+        self.eventImageURL = details[APIKeys.kEventImageURL] as? String
+        self.eventDate = details[APIKeys.kEventStartDate] as? String
+        self.guestCount = details[APIKeys.kGuestCount] as? Int
+        self.eventLocation = details[APIKeys.kEventLocation] as? String
+        self.eventDescription = details[APIKeys.kEventDescription] as? String
+        self.eventLatitude = details[APIKeys.kEventLat] as? Double
+        self.eventLongitude = details[APIKeys.kEventLong] as? Double
+        self.ticketCount = details[APIKeys.kTicketCount] as? Int
+        self.eventID = details[APIKeys.kID] as? Int
+    }
+}
+
+struct GuestList {
+    var guestName : String?
+    var guestImageURL : String?
+    
+    init(details: JSONDictionary) {
+        self.guestName = details[APIKeys.kGuestName] as? String
+        self.guestImageURL = details[APIKeys.kImageURL] as? String
+    }
+}
+
+struct PostList {
+    var postImageURL : String?
+    var postText : String?
+    var commentCount : Int?
+    var likeCount : Int?
+    var postID : Int?
+    var postLikeStatus : Int?
+    
+    init(details: JSONDictionary) {
+        self.postImageURL = details[APIKeys.kPostImageURL] as? String
+        self.postText = details[APIKeys.kText] as? String
+        self.commentCount = details[APIKeys.kCommentCount] as? Int
+        self.likeCount = details[APIKeys.kLikeCount] as? Int
+        self.postID = details[APIKeys.kID] as? Int
+        self.postLikeStatus = details[APIKeys.kLikeStatus] as? Int
+    }
+}
+
+struct CommentList {
+    var comment : String?
+    var imageURL : String?
+    init(details: JSONDictionary) {
+        self.comment = details[APIKeys.kComment] as? String
+        if let userInfoDict = details[APIKeys.kUserInfo] as? JSONDictionary {
+            self.imageURL = userInfoDict[APIKeys.kImageURL] as? String
+        }
+    }
+}
+
+struct TicketList {
+    var ticketTitle : String?
+    var ticketDescription : String?
+    var ticketAmount : Int?
+    var ticketQuantity : Int?
+    var ticketCount : Int?
+    
+    init(details: JSONDictionary) {
+        self.ticketTitle = details[APIKeys.kTicketTitle] as? String
+        self.ticketDescription = details[APIKeys.kTicketDescription] as? String
+        self.ticketAmount = details[APIKeys.kTicketAmount] as? Int
+        self.ticketQuantity = details[APIKeys.kTicketQuantity] as? Int
+        self.ticketCount = 0
+    }
+}
+
+
+//MARK: Parsing data
+extension EventVM {
+    func parseEventList(response: JSONDictionary) {
+        if self.eventDetailArray == nil {
+            self.eventDetailArray = [EventDetail]()
+        }
+        if let data = response[APIKeys.kData] as? JSONDictionary{
+            self.eventLastPage = data[APIKeys.kLastPage] as? Int
+            if let eventDataArray = data[APIKeys.kData] as? JSONArray {
+                for event in eventDataArray {
+                    let eventList = EventDetail(details: event)
+                    self.eventDetailArray?.append(eventList)
+                }
+            }
+        }
+    }
+    
+    func parseGuestList(response: JSONDictionary) {
+        self.guestListArray = [GuestList]()
+        if let data = response[APIKeys.kData] as? JSONDictionary{
+            if let guestDataArray = data[APIKeys.kData] as? JSONArray {
+                for guest in guestDataArray {
+                    let guestList = GuestList(details: guest)
+                    self.guestListArray?.append(guestList)
+                }
+            }
+        }
+    }
+
+    func parsePostList(response: JSONDictionary) {
+        self.postListArray = [PostList]()
+        if let data = response[APIKeys.kData] as? JSONDictionary{
+            self.postLastPage = data[APIKeys.kLastPage] as? Int
+            if let postDataArray = data[APIKeys.kData] as? JSONArray {
+                for post in postDataArray {
+                    let postList = PostList(details: post)
+                    self.postListArray?.append(postList)
+                }
+            }
+        }
+    }
+    
+    func parseCommentList(response: JSONDictionary) {
+        self.commentListArray = [CommentList]()
+        if let data = response[APIKeys.kData] as? JSONDictionary {
+            if let commentDataArray = data[APIKeys.kData] as? JSONArray {
+                for comment in commentDataArray {
+                    let commentList = CommentList(details: comment)
+                    self.commentListArray?.append(commentList)
+                }
+            }
+        }
+    }
+    
+    func parseTicketList(response: JSONDictionary) {
+        self.ticketListArray = [TicketList]()
+        if let data = response[APIKeys.kData] as? JSONArray {
+            for ticket in data {
+                let ticketList = TicketList(details: ticket)
+                self.ticketListArray?.append(ticketList)
+            }
+        }
+    }
+}
+
+

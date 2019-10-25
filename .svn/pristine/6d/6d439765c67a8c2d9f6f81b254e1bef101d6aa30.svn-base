@@ -1,0 +1,96 @@
+//
+//  CheckinHomeVC.swift
+//  MoTiv
+//
+//  Created by IOS on 06/12/18.
+//  Copyright © 2018 MoTiv. All rights reserved.
+//
+
+import UIKit
+import SDWebImage
+
+class CheckinHomeVC: BaseVC {
+    
+    //MARK: IBOutlets
+    @IBOutlet weak var tableView: UITableView!
+    
+    //MARK: Variables
+    var selectedTime: EventTime = .future
+    var indexofPage:Int = 1
+
+    //MARK: Class Life Cycle
+    override func viewDidLoad() {
+        super.viewDidLoad()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        getEventList()
+        customiseUI()
+    }
+    
+    //MARK: Private Methods
+    private func customiseUI() {
+        self.parent?.navigationItem.rightBarButtonItems = nil
+        self.parent?.navigationItem.leftBarButtonItems = nil
+        setTitle(title: kCheckIn, showBack: false)
+    }
+    
+    func setData() -> JSONDictionary {
+        var dict = JSONDictionary()
+        dict[APIKeys.kEventTime] = selectedTime.rawValue
+        dict[APIKeys.kPage] = indexofPage
+        return dict
+    }
+}
+
+//MARK: UItableveiw datasource
+extension CheckinHomeVC: UITableViewDataSource {
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return EventVM.shared.eventDetailArray?.count ?? 0
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: kCheckinEventCell) as! CheckinEventCell
+        cell.nameLabel.text = EventVM.shared.eventDetailArray?[indexPath.row].eventName
+        cell.timeLabel.text = EventVM.shared.eventDetailArray?[indexPath.row].eventDateTime?.dateFromString(format: .dateTime, type: .local).stringFromDate(format: .time, type: .local)
+        cell.eventImage.sd_setImage(with: URL(string: EventVM.shared.eventDetailArray?[indexPath.row].eventImageURL ?? ""), placeholderImage: #imageLiteral(resourceName: "imagePlaceholder"), options: .cacheMemoryOnly, completed: nil)
+        cell.eventImage.set(radius: 12.0)
+        return cell
+    }
+}
+
+//MARK: UITableview Delegates
+extension CheckinHomeVC: UITableViewDelegate {
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let menuvc = self.storyboard?.instantiateViewController(withIdentifier: kEventMenuVC) as! EventMenuVC
+        menuvc.selectedIndex = indexPath.row
+        self.navigationController?.show(menuvc, sender: self)
+    }
+}
+
+//MARK: API Methods
+extension CheckinHomeVC {
+    func getEventList(){
+        if indexofPage == 1 {
+            EventVM.shared.eventDetailArray?.removeAll()
+            tableView.reloadData()
+        }
+        EventVM.shared.getEventList(dict: setData(), page: indexofPage){ (message, error) in
+            if error != nil{
+                self.indexofPage = 1
+                EventVM.shared.eventDetailArray?.removeAll()
+                self.tableView.reloadData()
+                self.showErrorMessage(error: error)
+            }
+            else {
+                if self.indexofPage != (EventVM.shared.eventLastPage ?? 0) {
+                    self.indexofPage += 1
+                }
+                self.tableView.reloadData()
+            }
+        }
+    }
+}

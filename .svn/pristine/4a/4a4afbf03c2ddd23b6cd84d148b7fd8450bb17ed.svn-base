@@ -1,0 +1,71 @@
+//
+//  SelectTicketVC.swift
+//  MoTiv
+//
+//  Created by ios2 on 29/11/18.
+//  Copyright © 2018 MoTiv. All rights reserved.
+//
+
+import UIKit
+
+class SelectTicketVC: BaseVC {
+    
+    //MARK:- IBOutlets
+    @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var buyTicketsButton: UIButton!
+    
+    //MARK: - Variables
+    
+    //MARLK: - Life cycle
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        // Do any additional setup after loading the view.
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        customUI()
+    }
+    
+    //MARK:- Private func
+    func customUI(){
+        setTitle(title: kSelectTickets)
+        self.buyTicketsButton.setBackgroundImage(self.buyTicketsButton.graidentImage, for: .normal)
+        self.buyTicketsButton.set(radius: 14.0)
+    }
+    
+    //MARK:- IBAction
+    @IBAction func buyTicketButtonAction(_ sender: Any) {
+        let vc = self.storyboard?.instantiateViewController(withIdentifier: kTicketDetailsVC) as! TicketDetailsVC
+        self.navigationController?.show(vc, sender: self)
+    }
+}
+
+//MARK: UITableview Datasource
+extension SelectTicketVC: UITableViewDataSource {
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return 10
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: kSelectTicketCell) as! SelectTicketCell
+        if indexPath.row == 2 {
+            cell.addButton.isHidden = true
+            cell.ticketCountBaseView.isHidden = false
+        }else {
+            cell.addButton.isHidden = false
+            cell.ticketCountBaseView.isHidden = true
+        }
+        return cell
+    }
+}
+
+//MARK: UItableview Delegates
+extension SelectTicketVC: UITableViewDelegate {
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+      
+    }
+}

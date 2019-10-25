@@ -1,0 +1,173 @@
+//
+//  ViewPostVC.swift
+//  MoTiv
+//
+//  Created by IOS on 30/11/18.
+//  Copyright © 2018 MoTiv. All rights reserved.
+//
+
+import UIKit
+
+class ViewPostVC: BaseVC {
+    
+    //MARK: IBOutlets
+    @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var tableHeightConstraint: NSLayoutConstraint!
+    
+    
+    //MARK: Variables
+    var selectedSection = -1
+    var comment = kEnterComment
+    var selectedIndex = Int()
+    var postList : [PostList]?
+    var indexofPage:Int = 1
+    
+    //MARK: Class Life Cycle
+    override func viewDidLoad() {
+        super.viewDidLoad()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        customiseUI()
+        getPostList()
+    }
+    
+    override func addButtonAction(sender: UIButton) {
+        let addpostvc = self.storyboard?.instantiateViewController(withIdentifier: kAddPostVC) as! AddPostVC
+        self.navigationController?.show(addpostvc, sender: self)
+    }
+    
+    //MARK: Private Methods
+    private func customiseUI() {
+        indexofPage = 1
+        tableView.sectionHeaderHeight = UITableViewAutomaticDimension
+        tableView.rowHeight = UITableViewAutomaticDimension
+        setTitle(title: kPosts)
+        setAddButton()
+        tableHeightConstraint.constant = tableView.contentSize.height
+    }
+    
+    func setData() -> JSONDictionary {
+        var dict = JSONDictionary()
+        dict[APIKeys.kEventID] = EventVM.shared.eventDetailArray?[selectedIndex].eventID
+        dict[APIKeys.kPage] = indexofPage
+        return dict
+    }
+
+}
+
+//MARK: Tableview Datasource
+extension ViewPostVC: UITableViewDataSource {
+    
+    func numberOfSections(in tableView: UITableView) -> Int {
+        return 2
+    }
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return 4+1
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: kCommentCell) as! CommentCell
+        if indexPath.row == 4 {
+            let cell = tableView.dequeueReusableCell(withIdentifier: kAddCommentCell) as! AddCommentCell
+            cell.backView.set(radius: 14.0)
+            cell.textView.delegate = self
+            cell.textView.text = selectedSection == indexPath.section ? comment: kEnterComment
+            cell.textView.tag = indexPath.section
+            cell.textView.text == kEnterComment ? cell.backView.removeShadow(): cell.backView.setShadow()
+            cell.iconImageView.image = cell.textView.text == kEnterComment ? #imageLiteral(resourceName: "commentUnSelected"): #imageLiteral(resourceName: "commentSelected")
+            cell.commentButton.addTarget(self, action: #selector(self.commentButtonAction(sender:)), for: .touchUpInside)
+            cell.commentButton.set(radius: 14.0)
+            cell.commentButton.setBackgroundImage(cell.commentButton.graidentImage, for: .normal)
+            return cell
+        }
+        return cell
+    }
+    
+    @objc func commentButtonAction(sender: UIButton) {
+        
+    }
+}
+
+//MARK: Tableview Delegates
+extension ViewPostVC: UITableViewDelegate {
+    
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let cell = tableView.dequeueReusableCell(withIdentifier: kPostSectionCell) as! PostSectionCell
+        cell.likeButton.addTarget(self, action: #selector(self.likeButtonAction(sender:)), for: .touchUpInside)
+        return cell
+    }
+    
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 249
+        
+    }
+    
+    @objc func likeButtonAction(sender: UIButton) {
+        sender.isSelected = !sender.isSelected
+    }
+}
+
+//MARK: Textview Delegates
+extension ViewPostVC: UITextViewDelegate {
+    
+    func textViewDidBeginEditing(_ textView: UITextView) {
+        textView.text = ""
+        selectedSection = textView.tag
+        let cell = tableView.cellForRow(at: IndexPath(row: 4, section: textView.tag)) as! AddCommentCell
+        cell.backView.removeShadow()
+        cell.iconImageView.image = #imageLiteral(resourceName: "commentUnSelected")
+    }
+    
+    func textViewDidEndEditing(_ textView: UITextView) {
+        textView.text = textView.text.isEmpty ? kEnterComment: textView.text
+        let cell = tableView.cellForRow(at: IndexPath(row: 4, section: textView.tag)) as! AddCommentCell
+        textView.text == kEnterComment ? cell.backView.removeShadow(): cell.backView.setShadow()
+        cell.iconImageView.image = textView.text == kEnterComment ? #imageLiteral(resourceName: "commentUnSelected"): #imageLiteral(resourceName: "commentSelected")
+    }
+    
+    func textViewDidChange(_ textView: UITextView) {
+        comment = textView.text!
+        let cell = tableView.cellForRow(at: IndexPath(row: 4, section: textView.tag)) as! AddCommentCell
+        textView.text!.isEmpty ? cell.backView.removeShadow(): cell.backView.setShadow()
+        cell.iconImageView.image = textView.text!.isEmpty ? #imageLiteral(resourceName: "commentUnSelected"): #imageLiteral(resourceName: "commentSelected")
+    }
+}
+
+//MARK: UIScrollViewDelegate
+extension ViewPostVC {
+    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView)
+    {
+        if (tableView!.contentOffset.y + tableView!.frame.height) >= (tableView!.contentSize.height - 50) {
+            if (postList?.count ?? 0) > 0 {
+                indexofPage = indexofPage + 1
+                getPostList()
+            }
+        }
+    }
+}
+
+extension ViewPostVC {
+    
+    func getPostList(){
+        if indexofPage == 1 {
+            EventVM.shared.postListArray?.removeAll()
+            self.postList?.removeAll()
+            self.tableView.reloadData()
+        }
+        EventVM.shared.getPostList(dict: setData()){ (message, error) in
+            if error != nil{
+                self.indexofPage = self.indexofPage - 1
+                self.showErrorMessage(error: error)
+            } else{
+                if self.indexofPage == (EventVM.shared.postLastPage ?? 0) {
+                    self.indexofPage = self.indexofPage - 1
+                }
+                self.postList = EventVM.shared.postListArray
+                self.tableView.reloadData()
+            }
+        }
+    }
+}

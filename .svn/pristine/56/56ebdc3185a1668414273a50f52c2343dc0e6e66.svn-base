@@ -1,0 +1,29 @@
+//
+//  ScanTicketVC.swift
+//  MoTiv
+//
+//  Created by IOS on 30/11/18.
+//  Copyright © 2018 MoTiv. All rights reserved.
+//
+
+import UIKit
+
+class ScanTicketVC: BaseVC {
+    
+    
+    @IBOutlet weak var cameraView: UIView!
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        customiseUI()
+    }
+    
+    //MARK: Private Methods
+    private func customiseUI() {
+        setTitle(title: kScanTicket)
+    }
+}

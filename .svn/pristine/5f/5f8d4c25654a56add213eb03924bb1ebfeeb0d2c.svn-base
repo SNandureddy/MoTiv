@@ -1,0 +1,50 @@
+//
+//  APIService+Event.swift
+//  MoTiv
+//
+//  Created by IOS on 18/12/18.
+//  Copyright © 2018 MoTiv. All rights reserved.
+//
+
+import Foundation
+
+enum EventAPIServices: APIService {
+    
+    case createEvent(dict: JSONDictionary)
+    
+    var path: String {
+        var path = ""
+        switch self {
+        case .createEvent:
+            path = BASE_URL.appending("createEvent")
+        }
+        return path
+    }
+    
+    var resource: Resource {
+        let header = [APIKeys.kAuthorization: "Bearer \(DataManager.accessToken ?? "")"]
+        var resource: Resource!
+        switch self {
+            
+        case let .createEvent(dict):
+            resource = Resource(method: .post, parameters: dict, headers: header)
+        }
+        return resource
+    }
+    
+}
+
+// MARK: Method for webservice
+extension APIManager {
+    
+    class func createEvent(dict: JSONDictionary, imageDict: [String: Data], successCallback: @escaping JSONDictionaryResponseCallback, failureCallback: @escaping APIServiceFailureCallback) {
+        EventAPIServices.createEvent(dict: dict).request(imageDict: imageDict, success: { (response) in
+            if let responseDict = response as? JSONDictionary {
+                successCallback(responseDict)
+            }
+            else {
+                successCallback([:])
+            }
+        }, failure: failureCallback)
+    }    
+}

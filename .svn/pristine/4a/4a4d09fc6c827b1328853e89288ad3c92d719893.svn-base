@@ -1,0 +1,133 @@
+//
+//  U_HomeFilterVC.swift
+//  MoTiv
+//
+//  Created by Deftsoft on 06/12/18.
+//  Copyright © 2018 MoTiv. All rights reserved.
+//
+
+import UIKit
+
+class U_HomeFilterVC: BaseVC {
+    // MARK: - IBOutlets
+    
+    @IBOutlet weak var locationLabel: UILabel!
+    @IBOutlet weak var eventSearchLabel: UILabel!
+    @IBOutlet weak var slider: UISlider!
+    @IBOutlet weak var dateTextField: TextField!
+    @IBOutlet weak var mainView: UIView!
+    @IBOutlet weak var moodSongsView: UIView!
+    @IBOutlet weak var moodSongViewHeightConstraint: NSLayoutConstraint!
+    @IBOutlet weak var moodSongCollectionView: UICollectionView!
+    @IBOutlet weak var moodSongSubCollectionView: UICollectionView!
+    @IBOutlet weak var moodSubSongView: UIView!
+    @IBOutlet weak var demandSongsView: UIView!
+    @IBOutlet weak var demandCollectionView: UICollectionView!
+    @IBOutlet weak var demandSongViewHeight: NSLayoutConstraint!
+    @IBOutlet weak var demandSubSongView: UIView!
+    @IBOutlet weak var demandSubCollectionView: UICollectionView!
+    @IBOutlet weak var moodSubSongViewHeight: NSLayoutConstraint!
+    @IBOutlet weak var demandSubSongViewHeight: NSLayoutConstraint!
+    
+    
+    // MARK: - Variables
+    
+    // MARK: - Class life cycle
+    override func viewDidLoad() {
+        super.viewDidLoad()
+    }
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(true)
+        self.customizeUI()
+    }
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+    }
+    
+    
+    // MARK: - Private functions
+    private func customizeUI() {
+        setTitle(title: kFilter)
+        setBackButton(image: #imageLiteral(resourceName: "cross"))
+        setRightButton(image: nil, title: kReset)
+        setupSlider()
+        let layout = moodSongSubCollectionView.collectionViewLayout as! UICollectionViewFlowLayout
+        layout.minimumInteritemSpacing = 10
+        moodSongSubCollectionView.layoutIfNeeded()
+        dateTextField.set(radius: 14.0)
+        
+        
+    }
+    //MARK: - CUSTOMISE RADIUS SLIDER
+    func setupSlider(){
+        slider.setThumbImage(#imageLiteral(resourceName: "thumbImage"), for: .normal)
+        slider.setThumbImage(#imageLiteral(resourceName: "thumbImage"), for: .highlighted)
+        slider.setThumbImage(#imageLiteral(resourceName: "thumbImage"), for: .normal)
+        slider.setThumbImage(#imageLiteral(resourceName: "thumbImage"), for: .highlighted)
+    }
+    
+    // MARK: - IBActions
+    @IBAction func sliderAction(_ sender: Any) {
+    }
+    
+    @IBAction func PreviousButtonAction(_ sender: Any) {
+    }
+    
+    @IBAction func nextButtonAction(_ sender: Any) {
+    }
+    
+    @IBAction func demandPreviousButtonAction(_ sender: Any) {
+    }
+    
+    
+    @IBAction func demandNextButtonAction(_ sender: Any) {
+    }
+    //MARK: TextField Actions
+    @IBAction func textFieldDidChange(_ sender: UITextField) {
+        dateTextField.text!.count > 0 ? dateTextField.setShadow(): dateTextField.removeShadow()
+        dateTextField.text!.count > 0 ? dateTextField.addBackground(): dateTextField.removeBackground()
+    }
+    
+}
+//MARK: UICollectionView Delegates and Datasources
+extension U_HomeFilterVC: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout{
+    func numberOfSections(in collectionView: UICollectionView) -> Int {
+        return 1
+    }
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        if collectionView == moodSongCollectionView{
+            return 4
+        }
+        if collectionView == moodSongSubCollectionView{
+            return 6
+        }
+        if collectionView == demandCollectionView{
+            return 4
+        }
+        if collectionView == demandSubCollectionView{
+            return 6
+        }
+        return 2
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: kSongAlbumCell, for: indexPath)
+        return cell
+    }
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        if collectionView == demandSubCollectionView || collectionView == moodSongSubCollectionView{
+            return CGSize(width: 100, height: 90)
+        }else{
+            return CGSize(width: (collectionView.frame.width - 20)/2, height: 100)
+        }
+    }
+   
+}
+extension U_HomeFilterVC: UITextFieldDelegate {
+    
+    func textFieldDidBeginEditing(_ textField: UITextField) {
+            self.setDatePicker(textField: textField)
+    }
+}
+
+

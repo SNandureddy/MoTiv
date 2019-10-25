@@ -1,0 +1,54 @@
+//
+//  CheckinHomeVC.swift
+//  MoTiv
+//
+//  Created by IOS on 06/12/18.
+//  Copyright © 2018 MoTiv. All rights reserved.
+//
+
+import UIKit
+
+class CheckinHomeVC: BaseVC {
+    
+    //MARK: IBOutlets
+    @IBOutlet weak var tableView: UITableView!
+    
+    //MARK: Class Life Cycle
+    override func viewDidLoad() {
+        super.viewDidLoad()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        customiseUI()
+    }
+    
+    //MARK: Private Methods
+    private func customiseUI() {
+        self.parent?.navigationItem.rightBarButtonItems = nil
+        self.parent?.navigationItem.leftBarButtonItems = nil
+        setTitle(title: kCheckIn, showBack: false)
+    }
+}
+
+//MARK: UItableveiw datasource
+extension CheckinHomeVC: UITableViewDataSource {
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return 8
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: kCheckinEventCell) as! CheckinEventCell
+        return cell
+    }
+}
+
+//MARK: UITableview Delegates
+extension CheckinHomeVC: UITableViewDelegate {
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let menuvc = self.storyboard?.instantiateViewController(withIdentifier: kEventMenuVC) as! EventMenuVC
+        self.navigationController?.show(menuvc, sender: self)
+    }
+}

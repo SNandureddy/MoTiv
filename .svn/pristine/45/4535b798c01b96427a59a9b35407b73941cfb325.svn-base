@@ -1,0 +1,93 @@
+//
+//  FindMotivVC.swift
+//  MoTiv
+//
+//  Created by Deftsoft on 06/12/18.
+//  Copyright © 2018 MoTiv. All rights reserved.
+//
+
+import UIKit
+
+class FindMotivVC: BaseVC {
+    
+    // MARK: - IBOutlets
+    @IBOutlet weak var listTableView: UITableView!
+    @IBOutlet weak var searchTextField: TextField!
+    
+    // MARK: - Variables
+    
+    // MARK: - Class life cycle
+    override func viewDidLoad() {
+        super.viewDidLoad()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        self.customizeUI()
+    }
+    
+    // MARK: - Private functions
+    private func customizeUI() {
+        self.hideNavigationBar()
+        searchTextField.set(radius: 14.0)
+        searchTextField.rightImage = searchTextField.text!.count > 0 ?  #imageLiteral(resourceName: "searchSelected") : #imageLiteral(resourceName: "searchUnSelected")
+        searchTextField.text!.count > 0 ? searchTextField.setShadow(): searchTextField.removeShadow()
+    }
+    
+    // MARK: - IBActions
+    @IBAction func textDidChange(_ sender: TextField) {
+        sender.rightImage = sender.text!.count > 0 ?  #imageLiteral(resourceName: "searchSelected") : #imageLiteral(resourceName: "searchUnSelected")
+        sender.text!.count > 0 ? sender.setShadow(): sender.removeShadow()
+    }
+    
+    
+}
+
+//MARK: UITableView Delegates & Datasources
+extension FindMotivVC: UITableViewDelegate, UITableViewDataSource{
+    
+    func numberOfSections(in tableView: UITableView) -> Int {
+        return 5
+    }
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return 1
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: kSearchEventCell, for: indexPath)as!SearchEventCell
+        cell.selectionStyle = .none
+        
+        cell.rows = indexPath.section + 4
+        cell.eventCollectionView.reloadData()
+        
+        let height = cell.eventCollectionView.collectionViewLayout.collectionViewContentSize.height
+        cell.collectionViewHeightConstraint.constant = height
+        
+        return cell
+    }
+    
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let cell = tableView.dequeueReusableCell(withIdentifier: kSectionCell)as!SectionCell
+        cell.selectionStyle = .none
+        cell.titleLabel.text = "SPORTS"
+        return cell
+    }
+    
+    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
+        return UITableViewAutomaticDimension
+    }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return UITableViewAutomaticDimension
+    }
+}
+
+extension FindMotivVC:UITextFieldDelegate{
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        return true
+    }
+    func textFieldDidBeginEditing(_ textField: UITextField) {
+        
+    }
+}

@@ -1,0 +1,101 @@
+//
+//  TicketDetailsVC.swift
+//  MoTiv
+//
+//  Created by ios2 on 29/11/18.
+//  Copyright © 2018 MoTiv. All rights reserved.
+//
+
+
+import UIKit
+
+class TicketDetailsVC: BaseVC {
+    
+    //MARK:- IBOutlets
+    @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var proceedButton: UIButton!
+    @IBOutlet weak var subTotalLabel: UILabel!
+    @IBOutlet weak var taxLabel: UILabel!
+    @IBOutlet weak var totalLabel: UILabel!
+    
+    //MARK: - Variables
+    var ticketDetailArray : [TicketList]? = [TicketList]()
+    var subtotal : Double?
+    var taxAmount : Double?
+    
+    //MARLK: - Life cycle
+    override func viewDidLoad() {
+        super.viewDidLoad()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        self.taxAmount = 1.25
+        self.ticketDetailArray = EventVM.shared.ticketListArray?.filter{($0.ticketCount ?? 0) > 0}
+        self.customUI()
+    }
+    
+    //MARK:- Private func
+    func customUI(){
+        setTitle(title: kBuyNow)
+        self.tableView.tableFooterView = UIView()
+        self.proceedButton.setBackgroundImage(self.proceedButton.graidentImage, for: .normal)
+        self.proceedButton.set(radius: 14.0)
+        self.subTotalLabel.text = "£\(self.subtotal ?? 0.0)"
+        self.taxLabel.text = "£\(self.taxAmount ?? 0.0)"
+        self.totalLabel.text = "£\((self.subtotal ?? 0.0) + (self.taxAmount ?? 0.0))"
+        tableView.reloadData()
+    }
+    
+    //MARK:- IBAction
+    @IBAction func proceedButtonAction(_ sender: Any) {
+        let detailvc = self.storyboard?.instantiateViewController(withIdentifier: kSelectPaymentMethodVC) as! SelectPaymentMethodVC
+        self.navigationController?.show(detailvc, sender: self)
+    }
+}
+
+//MARK: UITableview Datasource
+extension TicketDetailsVC: UITableViewDataSource {
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return ticketDetailArray?.count ?? 0
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: kTicketDetailsCell) as! TicketDetailsCell
+        cell.ticketTitleLabel.text = ticketDetailArray?[indexPath.row].ticketTitle
+        cell.ticketDetailLabel.text = ticketDetailArray?[indexPath.row].ticketDescription
+        cell.ticketCountLabel.text = "\(ticketDetailArray?[indexPath.row].ticketCount ?? 0) X £\(Double(ticketDetailArray?[indexPath.row].ticketAmount ?? 0))"
+        cell.crossButton.addTarget(self, action: #selector(self.crossButtonAction(sender:)), for: .touchUpInside)
+        cell.crossButton.tag = indexPath.row
+        return cell
+    }
+    @objc func crossButtonAction(sender: UIButton) {
+        showAlert(title: nil, message: kDeleteTicketMessage, cancelTitle: kCancel, cancelAction: nil, okayTitle: kDelete) {
+            self.resetDataToMainArray(index: sender.tag)
+            self.ticketDetailArray?.remove(at: sender.tag)
+            self.tableView.reloadData()
+            if self.ticketDetailArray?.count == 0 {
+                self.navigationController?.popViewController(animated: true)
+            }
+        }
+    }
+    
+    //resetig quantitiy to main array
+    func resetDataToMainArray(index : Int){
+        let id = self.ticketDetailArray?[index].ticketId
+        if let indexInArray = EventVM.shared.ticketListArray?.firstIndex(where: {$0.ticketId == id}) {
+            EventVM.shared.ticketListArray?[indexInArray].ticketCount = 0
+            EventVM.shared.ticketListArray?[indexInArray].ticketPrice = 0.0
+        }
+    }
+}
+
+//MARK: UItableview Delegates
+extension TicketDetailsVC: UITableViewDelegate {
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        //        let detailvc = self.storyboard?.instantiateViewController(withIdentifier: kEventDetails) as! EventDetailVC
+        //        self.navigationController?.show(detailvc, sender: self)
+    }
+}
